@@ -1,22 +1,31 @@
-import "./globals.css";
-import Link from "next/link";
+import type React from "react"
+import type { Metadata } from "next"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
+import { Analytics } from "@vercel/analytics/next"
+import { AuthProvider } from "@/hooks/use-auth"
+import { Suspense } from "react"
+import "./globals.css"
+
+export const metadata: Metadata = {
+  title: "BorrowHub - Community Item Sharing",
+  description: "Borrow and lend items with your community. Share what you have, get what you need.",
+  generator: "v0.app",
+}
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: Readonly<{
+  children: React.ReactNode
+}>) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 min-h-screen">
-        <nav className="bg-blue-600 p-4 text-white flex gap-4">
-          <Link href="/">Home</Link>
-          <Link href="/items">Items</Link>
-          <Link href="/users">Users</Link>
-          <Link href="/transactions">Transactions</Link>
-        </nav>
-        <main className="p-6">{children}</main>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
+        <Suspense fallback={null}>
+          <AuthProvider>{children}</AuthProvider>
+        </Suspense>
+        <Analytics />
       </body>
     </html>
-  );
+  )
 }
