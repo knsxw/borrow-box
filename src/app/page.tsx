@@ -16,7 +16,7 @@ import { Search, MapPin, Clock, LogIn, Plus } from "lucide-react";
 import { AuthModal } from "@/components/auth-modal";
 import { PostItemModal } from "@/components/post-item-modal";
 import { useAuth } from "@/hooks/use-auth";
-import { mockItems } from "@/lib/mock-data";
+import type { Item } from "@/lib/mock-data";
 
 export default function HomePage() {
   const { user, logout } = useAuth();
@@ -24,17 +24,33 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
-  const [filteredItems, setFilteredItems] = useState(mockItems);
+  const [items, setItems] = useState<Item[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
 
   useEffect(() => {
-    const filtered = mockItems.filter(
+    async function fetchItems() {
+      try {
+        const res = await fetch("/api/items");
+        if (!res.ok) throw new Error("Failed to fetch items");
+        const data = await res.json();
+        setItems(data);
+        setFilteredItems(data); // initialize with full list
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchItems();
+  }, []);
+
+  useEffect(() => {
+    const filtered = items.filter(
       (item) =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredItems(filtered);
-  }, [searchQuery]);
+  }, [searchQuery, items]);
 
   const handleAuthClick = (mode: "login" | "signup") => {
     setAuthMode(mode);

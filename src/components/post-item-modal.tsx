@@ -1,24 +1,49 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload } from "lucide-react"
+import type React from "react";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Upload } from "lucide-react";
 
 interface PostItemModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const categories = ["Electronics", "Tools", "Sports", "Books", "Furniture", "Kitchen", "Garden", "Clothing", "Other"]
+const categories = [
+  "Electronics",
+  "Tools",
+  "Sports",
+  "Books",
+  "Furniture",
+  "Kitchen",
+  "Garden",
+  "Clothing",
+  "Other",
+];
 
 export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
+  const user =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("borrowhub_user") || "null")
+      : null;
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -26,17 +51,24 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
     location: "",
     duration: "",
     image: "",
-  })
-  const [loading, setLoading] = useState(false)
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      // Here you would typically save to a database
-      // For now, we'll just simulate the process
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const res = await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          owner: user ? user.name : "Anonymous",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to post item");
 
       // Reset form and close modal
       setFormData({
@@ -46,21 +78,21 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
         location: "",
         duration: "",
         image: "",
-      })
-      onClose()
+      });
+      onClose();
 
-      // Show success message
-      alert("Item posted successfully!")
+      alert("Item posted successfully!");
     } catch (error) {
-      alert("Failed to post item. Please try again.")
+      console.error(error);
+      alert("Failed to post item. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,7 +100,8 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Post an Item</DialogTitle>
           <DialogDescription>
-            Share an item with your community and help others by lending what you don't use.
+            Share an item with your community and help others by lending what
+            you don't use.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,7 +132,10 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => handleInputChange("category", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -115,7 +151,10 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
 
             <div className="space-y-2">
               <Label htmlFor="duration">Max Duration</Label>
-              <Select value={formData.duration} onValueChange={(value) => handleInputChange("duration", value)}>
+              <Select
+                value={formData.duration}
+                onValueChange={(value) => handleInputChange("duration", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="How long?" />
                 </SelectTrigger>
@@ -153,21 +192,32 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             {!formData.image && (
               <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
                 <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Add an image URL or upload coming soon</p>
+                <p className="text-sm text-muted-foreground">
+                  Add an image URL or upload coming soon
+                </p>
               </div>
             )}
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1 bg-transparent">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1 bg-transparent"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+            >
               {loading ? "Posting..." : "Post Item"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
