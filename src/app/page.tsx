@@ -26,6 +26,7 @@ export default function HomePage() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
 
   useEffect(() => {
     async function fetchItems() {
@@ -74,6 +75,31 @@ export default function HomePage() {
     }
     // Handle borrow request logic here
     alert("Borrow request sent!");
+  };
+
+  const handleDelete = async (itemId: string) => {
+    if (!user) return;
+
+    try {
+      const res = await fetch(`/api/items/${itemId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ owner: user.name }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      alert("Item deleted!");
+      // Refresh list
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleEdit = (item: Item) => {
+    setEditingItem(item); // store the item being edited
+    setShowPostModal(true); // open the modal
   };
 
   return (
@@ -220,13 +246,34 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <Button
-                      size="sm"
-                      onClick={() => handleBorrowRequest(item.id)}
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      Borrow
-                    </Button>
+                    {user?.name === item.owner ? (
+                      // 👤 If this item belongs to the logged-in user → show Edit/Delete
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(item)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ) : (
+                      // If it's not theirs → show Borrow
+                      <Button
+                        size="sm"
+                        onClick={() => handleBorrowRequest(item.id)}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        Borrow
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -246,7 +293,11 @@ export default function HomePage() {
       {/* Post Item Modal */}
       <PostItemModal
         isOpen={showPostModal}
-        onClose={() => setShowPostModal(false)}
+        onClose={() => {
+          setShowPostModal(false);
+          setEditingItem(null);
+        }} // reset editing item on close
+        itemToEdit={editingItem}
       />
     </div>
   );

@@ -5,7 +5,19 @@ import { Item } from "@/models/Item";
 export async function GET() {
   await connectDB();
   const items = await Item.find();
-  return NextResponse.json(items);
+  return NextResponse.json(
+    items.map((i) => ({
+      id: i._id.toString(), // 👈 normalize _id → id
+      title: i.title,
+      description: i.description,
+      category: i.category,
+      location: i.location,
+      duration: i.duration,
+      owner: i.owner,
+      image: i.image,
+      available: i.available,
+    }))
+  );
 }
 
 export async function POST(req: Request) {

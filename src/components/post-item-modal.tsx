@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import { Upload } from "lucide-react";
 interface PostItemModalProps {
   isOpen: boolean;
   onClose: () => void;
+  itemToEdit?: any; // if provided, we're editing
 }
 
 const categories = [
@@ -39,11 +40,16 @@ const categories = [
   "Other",
 ];
 
-export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
+export function PostItemModal({
+  isOpen,
+  onClose,
+  itemToEdit,
+}: PostItemModalProps) {
   const user =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("borrowhub_user") || "null")
       : null;
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -54,23 +60,18 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
   });
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          owner: user ? user.name : "Anonymous",
-        }),
+  // Populate form if editing
+  useEffect(() => {
+    if (itemToEdit) {
+      setFormData({
+        title: itemToEdit.title || "",
+        description: itemToEdit.description || "",
+        category: itemToEdit.category || "",
+        location: itemToEdit.location || "",
+        duration: itemToEdit.duration || "",
+        image: itemToEdit.image || "",
       });
-
-      if (!res.ok) throw new Error("Failed to post item");
-
-      // Reset form and close modal
+    } else {
       setFormData({
         title: "",
         description: "",
@@ -79,12 +80,38 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
         duration: "",
         image: "",
       });
-      onClose();
+    }
+  }, [itemToEdit, isOpen]);
 
-      alert("Item posted successfully!");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch(
+        itemToEdit ? `/api/items/${itemToEdit.id}` : "/api/items",
+        {
+          method: itemToEdit ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            owner: user ? user.name : "Anonymous",
+          }),
+        }
+      );
+
+      if (!res.ok)
+        throw new Error(
+          itemToEdit ? "Failed to update item" : "Failed to post item"
+        );
+
+      onClose();
+      alert(
+        itemToEdit ? "Item updated successfully!" : "Item posted successfully!"
+      );
     } catch (error) {
       console.error(error);
-      alert("Failed to post item. Please try again.");
+      alert("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,14 +125,18 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Post an Item</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">
+            {itemToEdit ? "Edit Item" : "Post an Item"}
+          </DialogTitle>
           <DialogDescription>
-            Share an item with your community and help others by lending what
-            you don't use.
+            {itemToEdit
+              ? "Update the details of your item."
+              : "Share an item with your community and help others by lending what you don't use."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Item Title</Label>
             <Input
@@ -117,6 +148,7 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             />
           </div>
 
+          {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -129,6 +161,7 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             />
           </div>
 
+          {/* Category & Duration */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
@@ -169,6 +202,7 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             </div>
           </div>
 
+          {/* Location */}
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
             <Input
@@ -180,6 +214,7 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             />
           </div>
 
+          {/* Image */}
           <div className="space-y-2">
             <Label htmlFor="image">Image URL (optional)</Label>
             <Input
@@ -199,6 +234,7 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
             )}
           </div>
 
+          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <Button
               type="button"
@@ -213,7 +249,13 @@ export function PostItemModal({ isOpen, onClose }: PostItemModalProps) {
               disabled={loading}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700"
             >
-              {loading ? "Posting..." : "Post Item"}
+              {loading
+                ? itemToEdit
+                  ? "Updating..."
+                  : "Posting..."
+                : itemToEdit
+                ? "Update Item"
+                : "Post Item"}
             </Button>
           </div>
         </form>
