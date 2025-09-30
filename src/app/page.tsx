@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -27,6 +28,38 @@ export default function HomePage() {
   const [items, setItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    async function fetchMyRequests() {
+      try {
+        const res = await fetch(`/api/transactions?borrower=${user?.name}`);
+        if (!res.ok) throw new Error("Failed to fetch my requests");
+        const data = await res.json();
+        setMyRequests(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchMyRequests();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    async function fetchRequests() {
+      try {
+        const res = await fetch(`/api/transactions?owner=${user?.name}`);
+        if (!res.ok) throw new Error("Failed to fetch requests");
+        const data = await res.json();
+        setRequests(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchRequests();
+  }, [user]);
 
   useEffect(() => {
     async function fetchItems() {
@@ -67,14 +100,26 @@ export default function HomePage() {
     setShowPostModal(true);
   };
 
-  const handleBorrowRequest = (itemId: string) => {
+  const handleBorrowRequest = async (itemId: string, owner: string) => {
     if (!user) {
       setAuthMode("login");
       setShowAuthModal(true);
       return;
     }
     // Handle borrow request logic here
-    alert("Borrow request sent!");
+    try {
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, borrower: user?.name, owner }),
+      });
+
+      if (!res.ok) throw new Error("Borrow request failed");
+      alert("Borrow request sent!");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to send borrow request");
+    }
   };
 
   const handleDelete = async (itemId: string) => {
@@ -120,6 +165,11 @@ export default function HomePage() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {user && (
+                <Link href="/requests" className="text-sm font-medium">
+                  Requests
+                </Link>
+              )}
               {user ? (
                 <>
                   <Button
@@ -268,7 +318,7 @@ export default function HomePage() {
                       // If it's not theirs → show Borrow
                       <Button
                         size="sm"
-                        onClick={() => handleBorrowRequest(item.id)}
+                        onClick={() => handleBorrowRequest(item.id, item.owner)}
                         className="bg-emerald-600 hover:bg-emerald-700"
                       >
                         Borrow
@@ -279,6 +329,50 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
+          {user && myRequests.length > 0 && (
+            <section className="py-12 border-t">
+              <div className="container mx-auto px-4">
+                <h3 className="text-2xl font-bold mb-6">My Borrow Requests</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {myRequests.map((req) => (
+                    <Card
+                      key={req._id}
+                      className="border-2 hover:border-emerald-200"
+                    >
+                      <CardHeader>
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={req.item?.image || "/placeholder.svg"}
+                            alt={req.item?.title || "Item"}
+                            className="w-16 h-16 rounded-md object-cover"
+                          />
+                          <div>
+                            <CardTitle>
+                              {req.item?.title || "Unknown Item"}
+                            </CardTitle>
+                            <CardDescription>
+                              Owned by <b>{req.owner}</b>
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          {req.item?.description || "No description"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Status:{" "}
+                          <span className="font-medium capitalize">
+                            {req.status}
+                          </span>
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </section>
 
