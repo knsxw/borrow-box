@@ -62,18 +62,7 @@ export default function HomePage() {
   }, [user]);
 
   useEffect(() => {
-    async function fetchItems() {
-      try {
-        const res = await fetch("/api/items");
-        if (!res.ok) throw new Error("Failed to fetch items");
-        const data = await res.json();
-        setItems(data);
-        setFilteredItems(data); // initialize with full list
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    fetchItems();
+    fetchAllItems();
   }, []);
 
   useEffect(() => {
@@ -89,6 +78,25 @@ export default function HomePage() {
   const handleAuthClick = (mode: "login" | "signup") => {
     setAuthMode(mode);
     setShowAuthModal(true);
+  };
+
+  const fetchAllItems = async () => {
+    try {
+      const res = await fetch("/api/items");
+      if (!res.ok) throw new Error("Failed to fetch items");
+      const data = await res.json();
+      setItems(data);
+
+      const filtered = data.filter(
+        (item: Item) =>
+          item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredItems(filtered);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handlePostItem = () => {
@@ -136,6 +144,7 @@ export default function HomePage() {
       if (!res.ok) throw new Error(data.error);
 
       alert("Item deleted!");
+      fetchAllItems();
       // Refresh list
     } catch (err: any) {
       alert(err.message);
@@ -261,9 +270,11 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <CardTitle className="text-lg font-semibold text-foreground line-clamp-1">
-                      {item.title}
-                    </CardTitle>
+                    <Link href={`/item/${item.id}`}>
+                      <CardTitle className="text-lg font-semibold text-foreground line-clamp-1">
+                        {item.title}
+                      </CardTitle>
+                    </Link>
                     <Badge variant="secondary" className="ml-2 shrink-0">
                       {item.category}
                     </Badge>
@@ -390,6 +401,7 @@ export default function HomePage() {
         onClose={() => {
           setShowPostModal(false);
           setEditingItem(null);
+          fetchAllItems();
         }} // reset editing item on close
         itemToEdit={editingItem}
       />

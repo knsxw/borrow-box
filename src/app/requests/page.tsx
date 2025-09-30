@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -44,70 +45,72 @@ export default function RequestsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {requests.map((req) => (
-            <Card key={req._id} className="border-2 hover:border-emerald-200">
-              <CardHeader>
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={req.item?.image || "/placeholder.svg"}
-                    alt={req.item?.title || "Item"}
-                    className="w-16 h-16 rounded-md object-cover"
-                  />
-                  <div>
-                    <CardTitle>{req.item?.title || "Unknown Item"}</CardTitle>
-                    <CardDescription>
-                      Requested by <b>{req.borrower}</b>
-                    </CardDescription>
+            <Link href={`/item/${req.item?._id}`}>
+              <Card key={req._id} className="border-2 hover:border-emerald-200">
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={req.item?.image || "/placeholder.svg"}
+                      alt={req.item?.title || "Item"}
+                      className="w-16 h-16 rounded-md object-cover"
+                    />
+                    <div>
+                      <CardTitle>{req.item?.title || "Unknown Item"}</CardTitle>
+                      <CardDescription>
+                        Requested by <b>{req.borrower}</b>
+                      </CardDescription>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {req.item?.description || "No description"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Status:{" "}
-                  <span className="font-medium capitalize">{req.status}</span>
-                </p>
-                <div className="flex space-x-2 mt-4">
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                    onClick={async () => {
-                      await fetch(`/api/transactions/${req._id}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "accepted" }),
-                      });
-                      setRequests((prev) =>
-                        prev.map((r) =>
-                          r._id === req._id ? { ...r, status: "accepted" } : r
-                        )
-                      );
-                    }}
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={async () => {
-                      await fetch(`/api/transactions/${req._id}`, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "rejected" }),
-                      });
-                      setRequests((prev) =>
-                        prev.map((r) =>
-                          r._id === req._id ? { ...r, status: "rejected" } : r
-                        )
-                      );
-                    }}
-                  >
-                    Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {req.item?.description || "No description"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Status:{" "}
+                    <span className="font-medium capitalize">{req.status}</span>
+                  </p>
+                  <div className="flex space-x-2 mt-4">
+                    <Button
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                      onClick={async () => {
+                        await fetch(`/api/transactions/${req._id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ status: "accepted" }),
+                        });
+                        setRequests((prev) =>
+                          prev.map((r) =>
+                            r._id === req._id ? { ...r, status: "accepted" } : r
+                          )
+                        );
+                      }}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        await fetch(`/api/transactions/${req._id}`, {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ status: "rejected" }),
+                        });
+                        setRequests((prev) =>
+                          prev.map((r) =>
+                            r._id === req._id ? { ...r, status: "rejected" } : r
+                          )
+                        );
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}

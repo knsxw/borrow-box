@@ -2,6 +2,29 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import { Item } from "@/models/Item";
 
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  await connectDB();
+
+  const item = await Item.findById(params.id);
+  if (!item)
+    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+
+  return NextResponse.json({
+    id: item._id.toString(),
+    title: item.title,
+    description: item.description,
+    category: item.category,
+    location: item.location,
+    duration: item.duration,
+    owner: item.owner,
+    image: item.image,
+    available: item.available,
+  });
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
