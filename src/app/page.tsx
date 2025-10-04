@@ -30,6 +30,13 @@ export default function HomePage() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -73,6 +80,7 @@ export default function HomePage() {
         item.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
     setFilteredItems(filtered);
+    setCurrentPage(1);
   }, [searchQuery, items]);
 
   const handleAuthClick = (mode: "login" | "signup") => {
@@ -254,7 +262,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
+            {paginatedItems.map((item) => (
               <Card
                 key={item.id}
                 className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-emerald-200 dark:hover:border-emerald-800"
@@ -340,7 +348,38 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
-          {user && myRequests.length > 0 && (
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-8 space-x-2">
+              <Button
+                variant="outline"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => prev - 1)}
+              >
+                Previous
+              </Button>
+
+              {Array.from({ length: totalPages }, (_, i) => (
+                <Button
+                  key={i + 1}
+                  variant={currentPage === i + 1 ? "default" : "outline"}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+
+              <Button
+                variant="outline"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+
+          {/* {user && myRequests.length > 0 && (
             <section className="py-12 border-t">
               <div className="container mx-auto px-4">
                 <h3 className="text-2xl font-bold mb-6">My Borrow Requests</h3>
@@ -383,7 +422,7 @@ export default function HomePage() {
                 </div>
               </div>
             </section>
-          )}
+          )} */}
         </div>
       </section>
 
