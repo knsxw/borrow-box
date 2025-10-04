@@ -1,6 +1,5 @@
 "use client";
 
-import type React from "react";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -20,12 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload } from "lucide-react";
+import { Upload, ImageIcon } from "lucide-react";
 
 interface PostItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  itemToEdit?: any; // if provided, we're editing
+  itemToEdit?: any;
 }
 
 const categories = [
@@ -59,8 +58,9 @@ export function PostItemModal({
     image: "",
   });
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-  // Populate form if editing
+
   useEffect(() => {
     if (itemToEdit) {
       setFormData({
@@ -83,10 +83,42 @@ export function PostItemModal({
     }
   }, [itemToEdit, isOpen]);
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 🧩 Upload image to Cloudinary
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    const data = new FormData();
+    data.append("file", file);
+    data.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
+    data.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME!);
+
+    try {
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: "POST", body: data }
+      );
+      const json = await res.json();
+      handleInputChange("image", json.secure_url);
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const res = await fetch(
         itemToEdit ? `${API_URL}/items/${itemToEdit.id}` : `${API_URL}/items`,
@@ -115,10 +147,6 @@ export function PostItemModal({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -214,24 +242,34 @@ export function PostItemModal({
             />
           </div>
 
-          {/* Image */}
+          {/* ✅ Cloudinary Image Upload */}
           <div className="space-y-2">
-            <Label htmlFor="image">Image URL (optional)</Label>
-            <Input
-              id="image"
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              value={formData.image}
-              onChange={(e) => handleInputChange("image", e.target.value)}
-            />
-            {!formData.image && (
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+            <Label htmlFor="image">Upload Image</Label>
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+              <input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <label
+                htmlFor="image"
+                className="cursor-pointer flex flex-col items-center"
+              >
+                <Upload className="w-8 h-8 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Add an image URL or upload coming soon
+                  {uploading ? "Uploading..." : "Click to upload image"}
                 </p>
-              </div>
-            )}
+              </label>
+              {formData.image && (
+                <img
+                  src={formData.image}
+                  alt="Preview"
+                  className="mt-3 w-full h-48 object-cover rounded-md"
+                />
+              )}
+            </div>
           </div>
 
           {/* Buttons */}
@@ -240,7 +278,7 @@ export function PostItemModal({
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 bg-transparent"
+              className="flex-1"
             >
               Cancel
             </Button>
