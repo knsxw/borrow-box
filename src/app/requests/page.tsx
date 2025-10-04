@@ -18,13 +18,13 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState<any[]>([]); // requests for me (owner)
   const [myRequests, setMyRequests] = useState<any[]>([]); // requests I made (borrower)
   const router = useRouter();
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
   // Fetch requests where I'm the owner
   useEffect(() => {
     if (!user) return;
     async function fetchOwnerRequests() {
       try {
-        const res = await fetch(`/api/transactions?owner=${user?.name}`);
+        const res = await fetch(`${API_URL}/transactions?owner=${user?.name}`);
         if (!res.ok) throw new Error("Failed to fetch owner requests");
         const data = await res.json();
         setRequests(data);
@@ -40,7 +40,9 @@ export default function RequestsPage() {
     if (!user) return;
     async function fetchBorrowerRequests() {
       try {
-        const res = await fetch(`/api/transactions?borrower=${user?.name}`);
+        const res = await fetch(
+          `${API_URL}/transactions?borrower=${user?.name}`
+        );
         if (!res.ok) throw new Error("Failed to fetch borrower requests");
         const data = await res.json();
         setMyRequests(data);
@@ -107,7 +109,7 @@ export default function RequestsPage() {
                         size="sm"
                         className="bg-emerald-600 hover:bg-emerald-700"
                         onClick={async () => {
-                          await fetch(`/api/transactions/${req._id}`, {
+                          await fetch(`${API_URL}/transactions/${req._id}`, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: "accepted" }),
@@ -127,7 +129,7 @@ export default function RequestsPage() {
                         size="sm"
                         variant="destructive"
                         onClick={async () => {
-                          await fetch(`/api/transactions/${req._id}`, {
+                          await fetch(`${API_URL}/transactions/${req._id}`, {
                             method: "PUT",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ status: "rejected" }),

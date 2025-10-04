@@ -23,11 +23,11 @@ export default function ItemDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
   useEffect(() => {
     async function fetchItem() {
       try {
-        const res = await fetch(`/api/items/${params.id}`);
+        const res = await fetch(`${API_URL}/items/${params.id}`);
         if (!res.ok) throw new Error("Failed to fetch item");
         const data = await res.json();
         setItem(data);
@@ -44,7 +44,7 @@ export default function ItemDetailPage() {
     if (!user) return alert("Please login first!");
 
     try {
-      const res = await fetch("/api/transactions", {
+      const res = await fetch(`${API_URL}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -65,7 +65,7 @@ export default function ItemDetailPage() {
     if (!user) return;
 
     try {
-      const res = await fetch(`/api/items/${itemId}`, {
+      const res = await fetch(`${API_URL}/items/${itemId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ owner: user.name }),

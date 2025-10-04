@@ -59,7 +59,7 @@ export function PostItemModal({
     image: "",
   });
   const [loading, setLoading] = useState(false);
-
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
   // Populate form if editing
   useEffect(() => {
     if (itemToEdit) {
@@ -89,7 +89,7 @@ export function PostItemModal({
 
     try {
       const res = await fetch(
-        itemToEdit ? `/api/items/${itemToEdit.id}` : "/api/items",
+        itemToEdit ? `${API_URL}/items/${itemToEdit.id}` : `${API_URL}/items`,
         {
           method: itemToEdit ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },

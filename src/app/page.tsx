@@ -30,6 +30,7 @@ export default function HomePage() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [requests, setRequests] = useState<any[]>([]);
   const [myRequests, setMyRequests] = useState<any[]>([]);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
@@ -42,7 +43,9 @@ export default function HomePage() {
     if (!user) return;
     async function fetchMyRequests() {
       try {
-        const res = await fetch(`/api/transactions?borrower=${user?.name}`);
+        const res = await fetch(
+          `${API_URL}/transactions?borrower=${user?.name}`
+        );
         if (!res.ok) throw new Error("Failed to fetch my requests");
         const data = await res.json();
         setMyRequests(data);
@@ -57,7 +60,7 @@ export default function HomePage() {
     if (!user) return;
     async function fetchRequests() {
       try {
-        const res = await fetch(`/api/transactions?owner=${user?.name}`);
+        const res = await fetch(`${API_URL}/transactions?owner=${user?.name}`);
         if (!res.ok) throw new Error("Failed to fetch requests");
         const data = await res.json();
         setRequests(data);
@@ -90,7 +93,7 @@ export default function HomePage() {
 
   const fetchAllItems = async () => {
     try {
-      const res = await fetch("/api/items");
+      const res = await fetch(`${API_URL}/items`);
       if (!res.ok) throw new Error("Failed to fetch items");
       const data = await res.json();
       setItems(data);
@@ -124,7 +127,7 @@ export default function HomePage() {
     }
     // Handle borrow request logic here
     try {
-      const res = await fetch("/api/transactions", {
+      const res = await fetch(`${API_URL}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId, borrower: user?.name, owner }),
@@ -142,7 +145,7 @@ export default function HomePage() {
     if (!user) return;
 
     try {
-      const res = await fetch(`/api/items/${itemId}`, {
+      const res = await fetch(`${API_URL}/items/${itemId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ owner: user.name }),
@@ -173,7 +176,7 @@ export default function HomePage() {
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <img
-                  src="/borrow-box-icon.png"
+                  src="/borrowbox/borrow-box-icon.png"
                   alt="icon"
                   className="w-8 h-8"
                 />
